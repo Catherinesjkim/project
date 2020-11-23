@@ -1,0 +1,71 @@
+package com.myspace.drools_starter_project;
+
+import com.myspace.drools_starter_project.CustomerDetails;
+import com.myspace.drools_starter_project.CustomerEligibility;
+import java.lang.Number;
+
+
+rule "Setting default values on Eligibility"
+ dialect "mvel"
+ ruleflow-group "eligibility-rules"
+ no-loop true
+ //no-loop PREVENTS that the rule is activated again which would result in an endless loop.
+ when
+ eligible : CustomerEligibility( )
+ then
+ System.out.println("Rule fired : [" + drools.getRule().getName()+"]");
+  //This is plain java code (Accepts both mvel and java)
+ eligible.setLicenseApproved( false );
+ 
+ // OR 
+ // in MVEL :    modify( eligible ) { setLicenseApproved( false )}
+ 
+ eligible.setEligible( false );
+ 
+end
+
+
+rule "Check If the customer is eligible to receive a Driving license"
+ dialect "mvel"
+ //This is mvel language
+ ruleflow-group "eligibility-rules"
+ no-loop true
+ when
+ applicant : CustomerDetails( age < 18)
+ eligible : CustomerEligibility( )
+ then
+ modify( eligible ) { setEligible( false )}
+ modify( eligible ) {setLicenseApproved(false), setComment( "Applicant is too young to receive a drivers license" )}
+ System.out.println("Rule fired : [" + drools.getRule().getName()+"]");
+end
+
+rule "Update the customer as eligible to apply for license if age > 18"
+ dialect "mvel"
+ //This is mvel language
+ ruleflow-group "eligibility-rules"
+ no-loop true
+ when
+ applicant : CustomerDetails( age > 18)
+ eligible : CustomerEligibility( )
+ then
+ modify( eligible ) { setEligible( true )}
+ System.out.println("Rule fired : [" + drools.getRule().getName()+"]");
+end
+
+
+
+
+rule "Check If the customer has totalDrivingExpereince < 1 record the driver as a new driver"
+ dialect "mvel"
+ //This is mvel language
+ ruleflow-group "eligibility-rules"
+ no-loop true
+ when
+ applicant : (CustomerDetails( age >= 18, totalDrivingExpereince < 1))
+ eligible : CustomerEligibility( )
+ then
+ modify( eligible ) { setEligible( true )}
+ modify( eligible ) { setIsNewDriver( true )}
+ 
+ System.out.println("Rule fired : [" + drools.getRule().getName()+"]");
+end
